@@ -3,8 +3,7 @@ name: Execute SSH Commands
 on:
   workflow_dispatch: # 手动触发工作流
   schedule:
-    - cron: "22 22 * * *"  # 每天 UTC 时间 22:22（对应北京时间 06:22）
-    - cron: "00 12 * * *"  # 每天 UTC 时间 12:00（对应北京时间 20:00）
+    - cron: "0 22,10 * * *"  # 每天 北京时间 早6点 晚8点
 
 jobs:
   execute-commands:
@@ -32,6 +31,9 @@ jobs:
 
             echo "echo \"Executing for $username@$ssh\"" >> sshpass.sh
             echo "sshpass -p '$password' ssh -o StrictHostKeyChecking=no '$username@$ssh' 'bash <(curl -s https://raw.githubusercontent.com/cmliu/socks5-for-serv00/main/check_cron.sh)'" >> sshpass.sh
+            # 添加定时任务命令到远程服务器
+            echo "sshpass -p '$password' ssh -o StrictHostKeyChecking=no '$username@$ssh' 'echo \"pgrep -x web > /dev/null || nohup /home/$username/.vmess/web run -c /home/$username/.vmess/config.json >/dev/null 2>&1 &\" >> temp_cron && echo \"pgrep -x bot > /dev/null || nohup /home/$username/.vmess/bot tunnel --edge-ip-version auto --no-autoupdate --protocol http2 run --token <eyJhIjoiMjEwMDZkYjJmNjc1MzgxYTk5YzhhNDkxMzg1ZTc5NmEiLCJ0IjoiNThiZTA4ODItYTU4My00YTNlLWJmMDgtYmFlMDRiYmQ4M2ZmIiwicyI6Ik16ZGtZak15WWpBdFptTTBaQzAwT0RrNExXSmxOMlF0TkRVek4yRTVZamczTUdaaiJ9> >/dev/null 2>&1 &\" >> temp_cron && crontab temp_cron && rm -f temp_cron'" >> sshpass.sh
+          done < <(jq -c '.[]' accounts.json)
           done < <(jq -c '.[]' accounts.json)
           chmod +x sshpass.sh
 
