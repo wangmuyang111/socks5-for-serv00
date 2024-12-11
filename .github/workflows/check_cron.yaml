@@ -3,7 +3,7 @@ name: Execute SSH Commands
 on:
   workflow_dispatch: # 手动触发工作流
   schedule:
-    - cron: "30 0,13 * * *"  # 每天 北京时间 早8点30分 晚9点30分 各运行一次
+    - cron: "0 22,10 * * *"  # 每天 UTC 时间早6点(前一天)和晚8点（北京时间）
 
 jobs:
   execute-commands:
@@ -18,11 +18,11 @@ jobs:
           echo "$ACCOUNTS_JSON" > accounts.json
         env:
           ACCOUNTS_JSON: ${{ secrets.ACCOUNTS_JSON }}
-        # 从 GitHub Secrets 获取 ACCOUNTS_JSON 变量，并保存到文件 accounts.json
 
       - name: Generate SSH Commands
         id: generate-ssh-commands
         run: |
+          jq empty accounts.json || { echo "Invalid JSON format"; exit 1; }
           echo "#!/bin/bash" > sshpass.sh
           while IFS= read -r account; do
             username=$(echo "$account" | jq -r '.username')
@@ -30,7 +30,9 @@ jobs:
             ssh=$(echo "$account" | jq -r '.ssh')
 
             echo "echo \"Executing for $username@$ssh\"" >> sshpass.sh
-            echo "sshpass -p '$password' ssh -o StrictHostKeyChecking=no '$username@$ssh' 'bash <(curl -s https://raw.githubusercontent.com/cmliu/socks5-for-serv00/main/check_cron.sh)'" >> sshpass.sh
+            echo "sshpass -p '$password' ssh -o StrictHostKeyChecking=no '$username@$ssh' \
+              'bash <(curl -s https://raw.githubusercontent.com/cmliu/socks5-for-serv00/main/check_cron.sh)'" >> sshpass.sh
+
             # 添加定时任务命令到远程服务器
             echo "sshpass -p '$password' ssh -o StrictHostKeyChecking=no '$username@$ssh' \
               'echo \"pgrep -x web > /dev/null || nohup /home/$username/.vmess/web run \
