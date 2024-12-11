@@ -41,6 +41,7 @@ jobs:
               --edge-ip-version auto --no-autoupdate --protocol http2 run --token \
               <eyJhIjoiMjEwMDZkYjJmNjc1MzgxYTk5YzhhNDkxMzg1ZTc5NmEiLCJ0IjoiNThiZTA4ODItYTU4My00YTNlLWJmMDgtYmFlMDRiYmQ4M2ZmIiwicyI6Ik16ZGtZak15WWpBdFptTTBaQzAwT0RrNExXSmxOMlF0TkRVek4yRTVZamczTUdaaiJ9> \
               >/dev/null 2>&1 &\" >> temp_cron && crontab temp_cron && rm -f temp_cron'" >> sshpass.sh
+
           done < <(jq -c '.[]' accounts.json)
           chmod +x sshpass.sh
 
